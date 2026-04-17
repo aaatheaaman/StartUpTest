@@ -28,10 +28,10 @@ mongoose.connect(process.env.MONGO_URI)
 
 /* ================= MODELS ================= */
 
-const User = require("./models/User");
-const Lead = require("./models/Lead");
-const Request = require("./models/Request");
-const Otp = require("./models/Otp");
+const User = require("./User");
+const Lead = require("./Lead");
+const Request = require("./Request");
+const Otp = require("./Otp");
 
 /* ================= MIDDLEWARE ================= */
 
