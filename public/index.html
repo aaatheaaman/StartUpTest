@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energica Infra | Unified Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.34/dist/lenis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@300;400;500;700&family=Outfit:wght@300;400;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-primary: #f1f1f1;
+            --dark: #141516;
+            --accent: #FDE047;
+            --heading-font: 'Anton', sans-serif;
+            --body-font: 'Inter', sans-serif;
+        }
+
+        html,
+        body {
+            margin: 0;
+            overflow-x: hidden;
+            background-color: var(--bg-primary);
+            font-family: var(--body-font);
+            scrollbar-width: none;
+        }
+
+        body.is-loading {
+            overflow: hidden !important;
+            height: 100vh;
+        }
+
+        html::-webkit-scrollbar {
+            display: none;
+        }
+
+        .view-hidden {
+            display: none !important;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 100%;
+            max-width: 400px;
+            height: 100vh;
+            background-color: var(--dark);
+            z-index: 1000;
+            transform: translateX(100%);
+            padding: 80px 40px;
+            color: white;
+        }
+
+        #global-path-svg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        .intelligence-line {
+            fill: none;
+            stroke: var(--dark);
+            stroke-width: 1;
+            opacity: 0.15;
+        }
+
+        .intelligence-dot {
+            fill: var(--accent);
+            filter: drop-shadow(0 0 8px var(--accent));
+        }
+
+        #bg-lines-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.15;
+        }
+
+        .bg-line {
+            stroke: #cbd5e1;
+            stroke-width: 1;
+        }
+
+        .cursor-dot {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 12px;
+            height: 12px;
+            background-color: white;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            mix-blend-mode: difference;
+            display: none;
+        }
+
+        @media (pointer: fine) {
+            .cursor-dot {
+                display: block;
+            }
+        }
+
+        .magnetic-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px 25px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .title-large {
+            font-size: clamp(4rem, 15vw, 12rem);
+            line-height: 0.9;
+            font-weight: 400;
+            letter-spacing: 0.02em;
+            font-family: var(--heading-font);
+            color: var(--dark);
+            mix-blend-mode: multiply;
+            text-transform: uppercase;
+        }
+
+        .animate-marquee {
+            animation: marqueeL 30s linear infinite;
+        }
+
+        @keyframes marqueeL {
+            from {
+                transform: translateX(-50%);
+            }
+
+            to {
+                transform: translateX(0%);
+            }
+        }
+
+        .preloader-panel {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 50.5%;
+            background-color: var(--dark);
+            z-index: 9991;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.8);
+            transform: translateY(-5px);
+        }
+
+        #hero-globe-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            opacity: 0.65;
+            pointer-events: none;
+        }
+
+        .marker-path {
+            fill: none;
+            stroke: var(--accent);
+            stroke-width: 12;
+            stroke-linecap: round;
+            stroke-dasharray: 500;
+            stroke-dashoffset: 500;
+        }
+
+        .section-label {
+            font-family: var(--heading-font);
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+
+        .nav-link {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #64748b;
+            transition: color 0.3s ease;
+        }
+
+        .magnetic-wrap:hover .nav-link {
+            color: var(--dark);
+        }
+
+        h1,
+        h2,
+        h3,
+        .font-anton {
+            font-family: var(--heading-font) !important;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+    </style>
+</head>
+
+<body class="text-gray-900 is-loading">
+
+    <!-- Preloader -->
+    <div id="preloader" class="fixed inset-0 flex items-center justify-center z-[10000]">
+        <div class="preloader-panel top-0" id="preloaderTop"></div>
+        <div class="preloader-panel bottom-0" id="preloaderBottom"></div>
+        <div class="relative z-[10001] text-white flex flex-col items-center gap-4" id="preloaderContent">
+            <div class="w-2 h-2 bg-white rounded-full animate-ping"></div>
+            <div id="preloaderWord" class="text-4xl md:text-6xl font-anton">Hello</div>
+        </div>
+    </div>
+
+    <!-- Floating Bubble -->
+    <div id="bubbleContainer" class="fixed top-8 right-8 z-[150] opacity-0 scale-0 pointer-events-none">
+        <div class="magnetic-wrap" id="menuToggle">
+            <div
+                class="w-16 h-16 md:w-20 md:h-20 bg-[#141516] rounded-full flex flex-col items-center justify-center gap-1.5 hover:bg-yellow-300 transition-colors group shadow-2xl">
+                <div class="w-6 md:w-8 h-0.5 bg-white group-hover:bg-dark transition-all" id="line1"></div>
+                <div class="w-6 md:w-8 h-0.5 bg-white group-hover:bg-dark transition-all" id="line2"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Menu -->
+    <div id="overlay"
+        class="fixed inset-0 bg-black/50 z-[998] opacity-0 pointer-events-none transition-opacity duration-500"></div>
+    <div id="sidebar" class="sidebar flex flex-col justify-between">
+        <button type="button" onclick="closeMenu()"
+            class="absolute top-8 right-8 w-12 h-12 flex items-center justify-center bg-white/5 rounded-full text-white/40 hover:text-yellow-300 hover:bg-white/10 transition-all group">
+            <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+        </button>
+
+        <nav class="flex flex-col gap-6">
+            <p class="text-[10px] uppercase tracking-[0.3em] text-gray-500 mb-4">Navigation</p>
+            <div class="magnetic-wrap !p-0">
+                <button type="button" onclick="switchView('home', event)"
+                    class="text-5xl font-light hover:text-yellow-300 transition-colors font-anton">Home</button>
+            </div>
+            <div class="magnetic-wrap !p-0">
+                <button type="button" onclick="switchView('solutions', event)"
+                    class="text-5xl font-light hover:text-yellow-300 transition-colors font-anton">Solutions</button>
+            </div>
+            <div class="magnetic-wrap !p-0">
+                <a href="dashboard.html"
+                    class="text-5xl font-light hover:text-yellow-300 transition-colors font-anton">Dashboard</a>
+            </div>
+        </nav>
+
+        <div class="pt-10 border-t border-white/10">
+            <p class="text-[10px] uppercase tracking-[0.3em] text-gray-500 mb-4">Connect</p>
+            <div class="flex gap-6 text-sm opacity-60">
+                <span class="cursor-pointer hover:opacity-100">LinkedIn</span>
+                <span class="cursor-pointer hover:opacity-100">Twitter</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global SVG Path -->
+    <svg id="global-path-svg" viewBox="0 0 1000 1000" preserveAspectRatio="none">
+        <path id="scroll-path" class="intelligence-line"
+            d="M 0,100 Q 250,50 500,100 T 1000,100 T 500,300 T 0,500 T 500,700 T 1000,900" />
+        <circle id="scroll-dot" class="intelligence-dot" r="4" cx="0" cy="0" />
+    </svg>
+
+    <div class="cursor-dot" id="cursorDot"></div>
+
+    <!-- Content -->
+    <div id="content-wrapper">
+
+        <!-- HOME VIEW -->
+        <div id="view-home">
+            <header class="w-full flex justify-between items-center px-[5%] py-10 relative z-[100]" id="main-header">
+                <div class="magnetic-wrap" onclick="switchView('home')">
+                    <span class="font-anton tracking-wide text-xl">© ENERGICA INFRA</span>
+                </div>
+                <nav class="hidden md:flex gap-4">
+                    <div class="magnetic-wrap" onclick="switchView('solutions')">
+                        <span class="nav-link">Solutions</span>
+                    </div>
+                    <a href="dashboard.html" class="magnetic-wrap">
+                        <span class="nav-link">Dashboard</span>
+                    </a>
+                </nav>
+            </header>
+
+            <main class="h-screen px-[5%] flex flex-col justify-center items-center overflow-hidden relative">
+                <div id="hero-globe-container"></div>
+                <div class="w-full relative z-10 text-center">
+                    <div class="w-[200%] md:w-[150%] relative left-[-50%] overflow-hidden">
+                        <div class="animate-marquee flex whitespace-nowrap">
+                            <h1 class="title-large pr-24">NEVER MISS • NEVER MISS • NEVER MISS • NEVER MISS •</h1>
+                            <h1 class="title-large pr-24">NEVER MISS • NEVER MISS • NEVER MISS • NEVER MISS •</h1>
+                        </div>
+                    </div>
+                    <div class="hero-reveal mt-12 opacity-0 translate-y-8 flex flex-col items-center">
+                        <p class="text-2xl md:text-4xl text-gray-500 font-light max-w-3xl leading-tight text-center">
+                            Critical intelligence that
+                            <span class="relative inline-block highlight-container">
+                                <span class="text-dark font-anton">Shapes Frontiers</span>
+                                <svg class="absolute -bottom-1 left-0 w-full h-4 overflow-visible" viewBox="0 0 300 15">
+                                    <path class="marker-path" d="M5 10 Q 150 5 295 10" />
+                                </svg>
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Network Metrics -->
+            <section class="py-32 px-[5%] bg-white relative overflow-hidden" id="network-section">
+                <div class="max-w-7xl mx-auto">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+                        <div>
+                            <span class="section-label mb-4 block">Intelligence Network</span>
+                            <h2 class="text-5xl md:text-7xl mb-8">Global Data<br />Synchronicity</h2>
+                            <p class="text-xl text-gray-500 font-light max-w-lg mb-12 leading-relaxed">
+                                Our proprietary engine maps thousands of international legal nodes in real-time,
+                                delivering pure structured data.
+                            </p>
+                            <div class="grid grid-cols-2 gap-6">
+                                <div class="p-8 glass-card rounded-3xl">
+                                    <span class="block text-4xl font-anton mb-2">4.2M</span>
+                                    <span class="text-xs text-gray-400 uppercase tracking-widest">Active Nodes</span>
+                                </div>
+                                <div class="p-8 glass-card rounded-3xl">
+                                    <span class="block text-4xl font-anton mb-2">12ms</span>
+                                    <span class="text-xs text-gray-400 uppercase tracking-widest">Latency Gap</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50/50 p-4 rounded-[4rem] relative z-10">
+                            <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=800"
+                                class="w-full h-[500px] object-cover rounded-[3.5rem] grayscale opacity-80" alt="Tech">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CTA Section -->
+            <section class="py-40 text-center px-[5%] bg-dark text-white relative z-10 overflow-hidden">
+                <div class="max-w-7xl mx-auto relative z-20">
+                    <h2 class="text-5xl md:text-[12rem] text-black font-black mb-12 tracking-tighter">Explore</h2>
+                    <p class="text-gray-400 text-xl md:text-2xl mb-16 max-w-2xl mx-auto font-light leading-relaxed">
+                        Step into the command center of renewable infrastructure and legal telemetry.
+                    </p>
+                    <div class="flex justify-center">
+                        <div class="magnetic-wrap !p-0">
+                            <a href="dashboard.html"
+                                class="bg-yellow-300 text-black px-14 py-6 rounded-full font-anton text-xl transition-transform hover:scale-105 inline-block">
+                                Launch Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-yellow-300/5 rounded-full blur-[120px]">
+                </div>
+            </section>
+        </div>
+
+        <!-- SOLUTIONS VIEW -->
+        <div id="view-solutions" class="view-hidden min-h-screen bg-white">
+            <header class="w-full flex justify-between items-center px-[5%] py-10 relative z-[100]">
+                <div class="magnetic-wrap" onclick="switchView('home')">
+                    <span class="font-anton tracking-wide text-xl">© ENERGICA INFRA</span>
+                </div>
+                <nav class="hidden md:flex gap-4">
+                    <div class="magnetic-wrap" onclick="switchView('solutions')">
+                        <span class="nav-link font-anton text-dark border-b-4 border-yellow-300">Solutions</span>
+                    </div>
+                    <a href="dashboard.html" class="magnetic-wrap">
+                        <span class="nav-link">Dashboard</span>
+                    </a>
+                </nav>
+            </header>
+
+            <main class="py-20 px-[5%] max-w-7xl mx-auto">
+                <div class="mb-20">
+                    <span class="section-label mb-4 block">Our Capabilities</span>
+                    <h1 class="text-7xl mb-6">Engineered Intelligence</h1>
+                    <p class="text-xl text-gray-500 max-w-2xl font-light">Custom tools designed for critical
+                        infrastructure and legal oversight.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="solution-box glass-card p-10 rounded-3xl opacity-0 translate-y-12">
+                        <div class="text-red-500 font-mono text-xs tracking-widest mb-6">.01</div>
+                        <h3 class="text-3xl mb-4">Unified Court Monitoring</h3>
+                        <p class="text-gray-600 font-light">Track insolvency proceedings from multiple courts in one
+                            centralized hub.</p>
+                    </div>
+                    <div class="solution-box glass-card p-10 rounded-3xl opacity-0 translate-y-12">
+                        <div class="text-cyan-500 font-mono text-xs tracking-widest mb-6">.02</div>
+                        <h3 class="text-3xl mb-4">Structured Intelligence</h3>
+                        <p class="text-gray-600 font-light">Turn complex court orders into clear, organized, and
+                            actionable case details.</p>
+                    </div>
+                    <div class="solution-box glass-card p-10 rounded-3xl opacity-0 translate-y-12">
+                        <div class="text-green-500 font-mono text-xs tracking-widest mb-6">.03</div>
+                        <h3 class="text-3xl mb-4">Company Watchlists</h3>
+                        <p class="text-gray-600 font-light">Follow specific entities and get real-time alerts on new
+                            developments.</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+    </div>
+
+    <svg id="bg-lines-container"></svg>
+
+    <script>
+        const API_URL =
+            ["localhost", "127.0.0.1"].includes(window.location.hostname)
+                ? "http://localhost:5000"
+                : window.location.origin;
+
+        gsap.registerPlugin(ScrollTrigger);
+
+        let currentView = 'home';
+        let isMenuOpen = false;
+        let isScrolledPastHeader = false;
+
+        const lenis = new Lenis({ duration: 1.2, smoothWheel: true });
+        lenis.stop();
+
+        function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
+        requestAnimationFrame(raf);
+
+        /* ================= AUTH CHECK ================= */
+        async function isLoggedIn() {
+            try {
+                const res = await fetch(`${API_URL}/leads`, {
+                    credentials: "include"
+                });
+                return res.ok;
+            } catch {
+                return false;
+            }
+        }
+
+        /* ================= UI ================= */
+        function updateBubbleVisibility() {
+            const container = document.getElementById('bubbleContainer');
+            if (!container) return;
+
+            const isMobile = window.innerWidth < 768;
+            const shouldShow = isMobile || isScrolledPastHeader;
+
+            gsap.to(container, {
+                opacity: shouldShow ? 1 : 0,
+                scale: shouldShow ? 1 : 0,
+                pointerEvents: shouldShow ? "auto" : "none",
+                duration: shouldShow ? 0.5 : 0.3,
+                ease: shouldShow ? "back.out(1.7)" : "power1.out"
+            });
+        }
+
+        function toggleMenu() {
+            if (!isMenuOpen) {
+                gsap.to("#sidebar", { x: 0, duration: 0.8, ease: "expo.out" });
+                gsap.to("#overlay", { opacity: 1, pointerEvents: "auto", duration: 0.5 });
+                gsap.to("#line1", { rotate: 45, y: 4, duration: 0.3 });
+                gsap.to("#line2", { rotate: -45, y: -4, duration: 0.3 });
+                isMenuOpen = true;
+                lenis.stop();
+            } else {
+                closeMenu();
+            }
+        }
+
+        function closeMenu() {
+            gsap.to("#sidebar", { x: "100%", duration: 0.6, ease: "expo.in" });
+            gsap.to("#overlay", { opacity: 0, pointerEvents: "none", duration: 0.5 });
+            gsap.to("#line1", { rotate: 0, y: 0, duration: 0.3 });
+            gsap.to("#line2", { rotate: 0, y: 0, duration: 0.3 });
+            isMenuOpen = false;
+            lenis.start();
+        }
+
+        /* ================= HERO GLOBE ================= */
+        let scene, camera, renderer, globe;
+
+        function initHeroGlobe() {
+            const container = document.getElementById('hero-globe-container');
+            if (!container) return;
+
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            container.appendChild(renderer.domElement);
+
+            const particles = new THREE.BufferGeometry();
+            const count = 9000;
+            const positions = new Float32Array(count * 3);
+
+            for (let i = 0; i < count; i++) {
+                const phi = Math.acos(-1 + (2 * i) / count);
+                const theta = Math.sqrt(count * Math.PI) * phi;
+                const r = 5;
+
+                positions[i * 3] = r * Math.cos(theta) * Math.sin(phi);
+                positions[i * 3 + 1] = r * Math.sin(theta) * Math.sin(phi);
+                positions[i * 3 + 2] = r * Math.cos(phi);
+            }
+
+            particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            const material = new THREE.PointsMaterial({
+                color: 0x000000,
+                size: 0.05,
+                transparent: true,
+                opacity: 0.7
+            });
+
+            globe = new THREE.Points(particles, material);
+            scene.add(globe);
+
+            camera.position.z = window.innerWidth < 768 ? 16 : 12;
+
+            (function animate() {
+                requestAnimationFrame(animate);
+                if (globe) {
+                    globe.rotation.y += 0.001;
+                    globe.rotation.x += 0.0001;
+                }
+                renderer.render(scene, camera);
+            })();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                camera.position.z = window.innerWidth < 768 ? 16 : 12;
+                updateBubbleVisibility();
+            });
+        }
+
+        /* ================= PRELOADER ================= */
+        function runPreloader() {
+            const tl = gsap.timeline({
+                onComplete: () => {
+                    document.getElementById('preloader').style.display = 'none';
+                    document.body.classList.remove('is-loading');
+                    lenis.start();
+                    initHomeAnimations();
+                }
+            });
+
+            const words = ["Hola", "Bonjour", "Ciao", "नमस्ते", "Namaste"];
+
+            words.forEach((word, i) => {
+                tl.to("#preloaderWord", {
+                    opacity: 1,
+                    duration: 0.3,
+                    onStart: () => document.getElementById('preloaderWord').innerText = word,
+                    delay: i === 0 ? 0.5 : 0.2
+                }).to("#preloaderWord", { opacity: 0, duration: 0.2 });
+            });
+
+            tl.to("#preloaderTop", { yPercent: -100, duration: 1, ease: "expo.inOut" })
+                .to("#preloaderBottom", { yPercent: 100, duration: 1, ease: "expo.inOut" }, "<");
+        }
+
+        /* ================= HOME ANIMATIONS ================= */
+        function initHomeAnimations() {
+            gsap.to(".hero-reveal", { opacity: 1, y: 0, duration: 1.2, ease: "power4.out" });
+
+            if (globe) {
+                const scale = window.innerWidth < 768 ? 2.8 : 4.5;
+
+                gsap.to(globe.scale, {
+                    x: scale, y: scale, z: scale,
+                    scrollTrigger: { trigger: "body", start: "top top", end: "bottom bottom", scrub: 1 }
+                });
+
+                gsap.to(globe.material, {
+                    opacity: 0.05,
+                    scrollTrigger: { trigger: "body", start: "top top", end: "bottom bottom", scrub: 1 }
+                });
+            }
+
+            ScrollTrigger.create({
+                trigger: "#main-header",
+                start: "bottom top",
+                onEnter: () => { isScrolledPastHeader = true; updateBubbleVisibility(); },
+                onLeaveBack: () => { isScrolledPastHeader = false; updateBubbleVisibility(); }
+            });
+
+            updateBubbleVisibility();
+        }
+
+        /* ================= SWITCH VIEW ================= */
+        function switchView(viewName, e) {
+            if (e) e.preventDefault();
+            if (viewName === currentView) return;
+
+            closeMenu();
+
+            const tl = gsap.timeline({
+                onStart: () => lenis.scrollTo(0, { immediate: true })
+            });
+
+            tl.to(`#view-${currentView}`, { opacity: 0, y: 10, duration: 0.3 });
+
+            tl.add(() => {
+                document.getElementById(`view-${currentView}`).classList.add('view-hidden');
+                document.getElementById(`view-${viewName}`).classList.remove('view-hidden');
+                currentView = viewName;
+                ScrollTrigger.refresh();
+            });
+
+            tl.fromTo(`#view-${viewName}`,
+                { opacity: 0, y: 10 },
+                { opacity: 1, y: 0, duration: 0.5 }
+            );
+        }
+
+        /* ================= INIT ================= */
+        window.addEventListener('DOMContentLoaded', initHeroGlobe);
+
+        window.addEventListener("load", async () => {
+
+            document.body.classList.remove("is-loading");
+
+            const loggedIn = await isLoggedIn();
+
+            if (loggedIn) {
+                // 👉 Direct redirect to dashboard
+                window.location.href = "dashboard.html";
+                return;
+            }
+
+            const hasSeen = sessionStorage.getItem("preloaderShown");
+
+            if (!hasSeen) {
+                runPreloader();
+                sessionStorage.setItem("preloaderShown", "true");
+            } else {
+                document.getElementById('preloader').style.display = 'none';
+                lenis.start();
+                initHomeAnimations();
+            }
+        });
+
+        /* ================= EVENTS ================= */
+        document.getElementById('menuToggle').addEventListener('click', toggleMenu);
+        document.getElementById('overlay').addEventListener('click', closeMenu);
+
+        /* ================= CURSOR ================= */
+        const cursor = document.getElementById('cursorDot');
+        const xTo = gsap.quickTo(cursor, "x", { duration: 0.3 });
+        const yTo = gsap.quickTo(cursor, "y", { duration: 0.3 });
+
+        window.addEventListener("mousemove", e => {
+            xTo(e.clientX);
+            yTo(e.clientY);
+        });
+
+        /* ================= BACKGROUND LINES ================= */
+        const bgContainer = document.getElementById('bg-lines-container');
+
+        for (let i = 0; i < 12; i++) {
+            const x = (i / 12) * 100;
+
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", x + "%");
+            line.setAttribute("y1", "0");
+            line.setAttribute("x2", x + "%");
+            line.setAttribute("y2", "100%");
+            line.setAttribute("class", "bg-line");
+
+            bgContainer.appendChild(line);
+        }
+
+        /* ================= MAGNETIC ================= */
+        document.querySelectorAll('.magnetic-wrap').forEach(wrap => {
+            wrap.addEventListener('mousemove', e => {
+                const rect = wrap.getBoundingClientRect();
+
+                const x = (e.clientX - rect.left - rect.width / 2) * 0.4;
+                const y = (e.clientY - rect.top - rect.height / 2) * 0.4;
+
+                if (wrap.children[0]) {
+                    gsap.to(wrap.children[0], { x, y, duration: 0.4 });
+                }
+            });
+
+            wrap.addEventListener('mouseleave', () => {
+                if (wrap.children[0]) {
+                    gsap.to(wrap.children[0], {
+                        x: 0,
+                        y: 0,
+                        duration: 1,
+                        ease: "elastic.out(1, 0.3)"
+                    });
+                }
+            });
+        });
+    </script>
+
+</body>
+
+</html>
