@@ -378,15 +378,15 @@
                 const data = await res.json();
 
                 assets = data.map(i => ({
-                    id: i.id,
+                    id: i._id, // ✅ FIX
                     tech: i.tech,
                     title: i.title,
                     specs: {
                         cap: i.capacity,
                         tariff: i.tariff,
                         distance: i.distance
-                    }
-                }));
+                        }
+               }));
 
                 renderAssets();
 
