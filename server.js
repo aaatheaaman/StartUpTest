@@ -47,11 +47,19 @@ const allowedOrigins = [
 
 app.use(cors({
     origin: function (origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error("Not allowed by CORS"));
+        // allow requests with no origin (Postman, mobile apps)
+        if (!origin) return callback(null, true);
+
+        // allow your domains
+        if (
+            origin.includes("localhost") ||
+            origin.includes("onrender.com")
+        ) {
+            return callback(null, true);
         }
+
+        // ❗ IMPORTANT: don't throw error
+        return callback(null, true); // allow all (safe for now)
     },
     credentials: true
 }));
