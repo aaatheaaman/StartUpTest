@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energica Infra | Secure Access</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-primary: #f8fafc;
+            --dark: #141516;
+            --accent: #FDE047;
+            --heading-font: 'Anton', sans-serif;
+            --body-font: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            font-family: var(--body-font);
+            margin: 0;
+            min-height: 100vh;
+            color: var(--dark);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .font-anton {
+            font-family: var(--heading-font);
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        /* Smooth Background Grid */
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.3;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.05);
+            border-radius: 2rem;
+            width: 100%;
+            max-width: 480px;
+            transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 1.25rem;
+        }
+
+        .login-input {
+            width: 100%;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            padding: 0.875rem 1.25rem;
+            border-radius: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .login-input:focus {
+            border-color: var(--dark);
+            box-shadow: 0 0 0 4px rgba(20, 21, 22, 0.05);
+        }
+
+        .view-section {
+            display: none;
+            opacity: 0;
+            width: 100%;
+        }
+
+        .view-section.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 1;
+        }
+
+        .magnetic-btn {
+            display: inline-block;
+            transition: transform 0.2s ease;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body class="px-6">
+
+    <div class="bg-grid"></div>
+
+    <!-- Header / Brand -->
+    <header class="w-full py-8 flex justify-center shrink-0">
+        <div class="magnetic-btn cursor-pointer" onclick="window.location.href='login.html'">
+            <span class="font-anton text-xl tracking-tighter">© ENERGICA INFRA</span>
+        </div>
+    </header>
+
+    <!-- Main Centered Container -->
+    <main class="flex-grow flex items-center justify-center w-full py-8">
+
+        <!-- LOGIN SECTION -->
+        <section id="login-view" class="view-section active">
+            <div class="text-center mb-6">
+                <h1 class="text-4xl md:text-5xl font-anton mb-2">Reset Password</h1>
+            </div>
+
+            <div class="glass-card p-8 md:p-10">
+                <div id="loginForm" class="space-y-4">
+                    <div class="input-group">
+                        <label
+                            class="text-[10px] font-anton uppercase tracking-widest text-slate-400 mb-1.5 block ml-1">
+                            Email</label>
+                        <input type="email" id="loginEmail" placeholder="name@company.com" class="login-input" required>
+                    </div>
+
+                    <div id="otpSection" class="hidden space-y-3">
+                        <input type="text" id="otp" placeholder="Enter OTP" class="login-input" />
+                        <input type="password" id="newPassword" placeholder="New Password" class="login-input" />
+
+
+                    </div>
+
+
+                    <div class="flex items-center justify-between pb-1">
+
+
+                    </div>
+
+                    <button type="button" id="resetBtn"
+                        class="w-full bg-dark text-black py-4 rounded-xl font-anton text-lg tracking-widest hover:bg-slate-800 transition-all shadow-lg active:scale-[0.98]">
+                        Reset Password
+                    </button>
+
+                    <div class="mt-6 pt-6 border-t border-slate-100 text-center">
+
+                    </div>
+                </div>
+        </section>
+
+        <!-- REGISTER SECTION -->
+
+
+    </main>
+
+    <script>
+        /* ================= CONFIG ================= */
+        const API_URL =
+            ["localhost", "127.0.0.1"].includes(window.location.hostname)
+                ? "http://localhost:5000"
+                : window.location.origin;
+
+        let userEmail = "";
+        let step = 1;
+        let isProcessing = false;
+
+        /* ================= TOAST ================= */
+        function showToast(message, type = "error") {
+            const container = document.getElementById("toast-container");
+            if (!container) return;
+
+            const toast = document.createElement("div");
+
+            const colors = {
+                success: "bg-green-500",
+                error: "bg-red-500"
+            };
+
+            toast.className = `${colors[type]} text-white px-5 py-3 rounded-xl shadow-lg`;
+            toast.innerHTML = (type === "success" ? "✅ " : "❌ ") + message;
+
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        /* ================= VALIDATORS ================= */
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        /* ================= MAIN FUNCTION ================= */
+        async function handleReset() {
+            if (isProcessing) return; // 🔥 prevent spam clicks
+
+            const btn = document.getElementById("resetBtn");
+
+            /* ===== STEP 1: SEND OTP ===== */
+            if (step === 1) {
+                userEmail = document.getElementById("loginEmail").value.trim().toLowerCase();
+
+                if (!userEmail) {
+                    showToast("Enter email");
+                    return;
+                }
+
+                if (!isValidEmail(userEmail)) {
+                    showToast("Invalid email format");
+                    return;
+                }
+
+                isProcessing = true;
+                btn.innerHTML = "Sending OTP...";
+                btn.disabled = true;
+
+                try {
+                    const res = await fetch(`${API_URL}/forgot-password`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        body: JSON.stringify({ email: userEmail })
+                    });
+
+                    const data = await res.json();
+
+                    if (!res.ok) {
+                        showToast(data.message || "Failed to send OTP");
+                        btn.innerHTML = "Reset Password";
+                        btn.disabled = false;
+                        isProcessing = false;
+                        return;
+                    }
+
+                    showToast("OTP sent successfully", "success");
+
+                    document.getElementById("otpSection").classList.remove("hidden");
+
+                    btn.innerHTML = "Verify & Update Password";
+                    btn.disabled = false;
+
+                    step = 2;
+                    isProcessing = false;
+
+                } catch (err) {
+                    console.error(err);
+                    showToast("Server error");
+                    btn.innerHTML = "Reset Password";
+                    btn.disabled = false;
+                    isProcessing = false;
+                }
+            }
+
+            /* ===== STEP 2: VERIFY + RESET ===== */
+            else {
+                const otp = document.getElementById("otp").value.trim();
+                const newPassword = document.getElementById("newPassword").value.trim();
+
+                if (!otp || !newPassword) {
+                    showToast("Enter OTP & new password");
+                    return;
+                }
+
+                if (newPassword.length < 6) {
+                    showToast("Password must be at least 6 characters");
+                    return;
+                }
+
+                isProcessing = true;
+                btn.innerHTML = "Verifying...";
+                btn.disabled = true;
+
+                try {
+                    /* ---- VERIFY OTP ---- */
+                    const verifyRes = await fetch(`${API_URL}/verify-otp`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        body: JSON.stringify({ email: userEmail, otp })
+                    });
+
+                    const verifyData = await verifyRes.json();
+
+                    if (!verifyRes.ok) {
+                        showToast(verifyData.message || "Invalid OTP");
+                        btn.innerHTML = "Verify & Update Password";
+                        btn.disabled = false;
+                        isProcessing = false;
+                        return;
+                    }
+
+                    /* ---- RESET PASSWORD ---- */
+                    const resetRes = await fetch(`${API_URL}/reset-password`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        body: JSON.stringify({ email: userEmail, password: newPassword })
+                    });
+
+                    const resetData = await resetRes.json();
+
+                    if (!resetRes.ok) {
+                        showToast(resetData.message || "Reset failed");
+                        btn.innerHTML = "Verify & Update Password";
+                        btn.disabled = false;
+                        isProcessing = false;
+                        return;
+                    }
+
+                    showToast("Password updated successfully!", "success");
+
+                    // ✅ redirect
+                    setTimeout(() => {
+                        window.location.href = "login.html";
+                    }, 1000);
+
+                } catch (err) {
+                    console.error(err);
+                    showToast("Server error");
+                    btn.innerHTML = "Verify & Update Password";
+                    btn.disabled = false;
+                    isProcessing = false;
+                }
+            }
+        }
+
+        /* ================= EVENT ================= */
+        document.getElementById("resetBtn").addEventListener("click", handleReset);
+    </script>
+
+
+    <div id="toast-container" class="fixed bottom-5 right-5 z-[9999] space-y-3"></div>
+</body>
+
+</html>

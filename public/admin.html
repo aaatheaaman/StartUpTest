@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energica Infra | Core Admin & Schema</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.34/dist/lenis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-primary: #f8f9fa;
+            --dark: #111111;
+            --accent: #ca8a04;
+            --heading-font: 'Anton', sans-serif;
+            --body-font: 'Inter', sans-serif;
+            --mono-font: 'JetBrains Mono', monospace;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            font-family: var(--body-font);
+            color: var(--dark);
+            overflow-x: hidden;
+        }
+
+        .font-anton {
+            font-family: var(--heading-font);
+        }
+
+        .font-mono {
+            font-family: var(--mono-font);
+        }
+
+        /* Card Styles */
+        .lead-card {
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lead-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 0;
+            background: var(--accent);
+            transition: height 0.3s ease;
+        }
+
+        .lead-card.selected {
+            border-color: var(--accent);
+            box-shadow: 0 20px 40px -15px rgba(202, 138, 4, 0.1);
+            transform: translateX(8px);
+        }
+
+        .lead-card.selected::before {
+            height: 100%;
+        }
+
+        .lead-card:hover:not(.selected) {
+            border-color: rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Status Badges */
+        .status-pill {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            padding: 2px 8px;
+            border-radius: 99px;
+            text-transform: uppercase;
+        }
+
+        .status-new {
+            background: #fef9c3;
+            color: #854d0e;
+        }
+
+        .status-active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        /* Scrollbar */
+        .custom-scroll::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+
+        #hero-globe-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.05;
+            pointer-events: none;
+        }
+
+        .tab-btn {
+            position: relative;
+            font-family: var(--heading-font);
+            font-size: 11px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            opacity: 0.4;
+            transition: 0.3s ease;
+        }
+
+        .tab-btn.active {
+            opacity: 1;
+            color: var(--accent);
+        }
+
+        .dossier-panel {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+
+<body class="is-loading">
+
+    <div id="hero-globe-container"></div>
+
+    <!-- Header -->
+    <header
+        class="w-full flex justify-between items-center px-8 py-6 sticky top-0 bg-white/80 backdrop-blur-xl z-50 border-b border-black/5">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-yellow-600 flex items-center justify-center rounded">
+                <span class="text-white font-anton text-lg">E</span>
+            </div>
+            <span class="font-anton tracking-[0.2em] text-sm uppercase">Admin Intelligence</span>
+        </div>
+        <nav class="flex gap-10">
+            <button class="tab-btn active" onclick="switchTab('admin')">Live Signals</button>
+            <!-- <button class="tab-btn" onclick="switchTab('schema')">Data Schema</button> -->
+        </nav>
+
+        <div class="text-[9px] font-mono opacity-40 uppercase" id="leadCountDisplay">Active: 0</div>
+        <button onclick="logout()"
+            class="bg-red-500 text-white px-4 py-1.5 rounded-full text-xs font-anton hover:bg-red-600 transition-all">
+            Logout
+        </button>
+    </header>
+
+    <main class="max-w-[1600px] mx-auto p-8">
+
+        <!-- ADMIN PANEL -->
+        <div id="panel-admin" class="tab-panel grid grid-cols-12 gap-10">
+            <!-- Sidebar: Signals -->
+            <div class="col-span-12 lg:col-span-4 space-y-6">
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <h1 class="text-4xl font-anton uppercase">Signals</h1>
+                        <p class="text-xs text-gray-400 mt-1 uppercase tracking-widest">Global Intake Stream</p>
+                    </div>
+                </div>
+
+                <div id="leadsList" class="space-y-4 h-[calc(100vh-280px)] overflow-y-auto pr-4 custom-scroll">
+                    <!-- Cards injected here -->
+                    <div class="animate-pulse space-y-4">
+                        <div class="h-24 bg-black/5 rounded-xl"></div>
+                        <div class="h-24 bg-black/5 rounded-xl"></div>
+                        <div class="h-24 bg-black/5 rounded-xl"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail View: The Dossier -->
+            <div class="col-span-12 lg:col-span-8">
+                <div id="unmaskedDetail" class="dossier-panel rounded-[2rem] p-12 min-h-[600px] sticky top-32">
+                    <div class="flex flex-col items-center justify-center h-[500px] text-center space-y-6 opacity-30">
+                        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p class="font-anton uppercase tracking-widest text-xs">Select a signal to unmask encrypted
+                            assets</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCHEMA PANEL -->
+        <div id="panel-schema" class="tab-panel hidden opacity-0">
+            <div class="mb-12">
+                <h1 class="text-6xl font-anton uppercase mb-4">Core Schema</h1>
+                <p class="text-gray-500 max-w-xl uppercase text-[10px] tracking-widest">Mapping public metadata to
+                    private legal archives.</p>
+            </div>
+            <div class="bg-white rounded-[2rem] border border-black/5 overflow-hidden">
+                <table class="w-full text-left">
+                    <thead class="bg-black/[0.02] border-b border-black/5">
+                        <tr class="text-[10px] font-anton uppercase tracking-[0.2em] text-gray-500">
+                            <th class="p-8">Structure</th>
+                            <th class="p-8">Primary Index</th>
+                            <th class="p-8">Encryption Level</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm font-mono">
+
+                        <!-- USERS -->
+                        <tr class="border-b border-black/5">
+                            <td class="p-8">
+                                <span class="block font-anton text-lg uppercase mb-1">Users</span>
+                                Registered platform users (authentication system)
+                            </td>
+                            <td class="p-8 text-yellow-600">user_id</td>
+                            <td class="p-8 text-green-600">JWT Secured</td>
+                        </tr>
+
+                        <!-- USER PROFILE -->
+                        <tr class="border-b border-black/5">
+                            <td class="p-8">
+                                <span class="block font-anton text-lg uppercase mb-1">User_Profile</span>
+                                Stores username + email identity
+                            </td>
+                            <td class="p-8 text-yellow-600">email</td>
+                            <td class="p-8 opacity-40">Password Hashed</td>
+                        </tr>
+
+                        <!-- LEADS -->
+                        <tr class="border-b border-black/5">
+                            <td class="p-8">
+                                <span class="block font-anton text-lg uppercase mb-1">Leads</span>
+                                Asset requests submitted from dashboard
+                            </td>
+                            <td class="p-8 text-yellow-600">lead_id</td>
+                            <td class="p-8 text-blue-600">User Linked</td>
+                        </tr>
+
+                        <!-- LEAD DATA -->
+                        <tr class="border-b border-black/5">
+                            <td class="p-8">
+                                <span class="block font-anton text-lg uppercase mb-1">Lead_Metadata</span>
+                                title, tech, capacity, tariff, distance
+                            </td>
+                            <td class="p-8 text-yellow-600">lead_id</td>
+                            <td class="p-8 opacity-40">Mixed Visibility</td>
+                        </tr>
+
+                        <!-- RELATION -->
+                        <tr>
+                            <td class="p-8">
+                                <span class="block font-anton text-lg uppercase mb-1">User → Leads</span>
+                                One user can create multiple asset requests
+                            </td>
+                            <td class="p-8 text-yellow-600">user_email</td>
+                            <td class="p-8 text-purple-600">Relational Mapping</td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const API_URL =
+            ["localhost", "127.0.0.1"].includes(window.location.hostname)
+                ? "http://localhost:5000"
+                : window.location.origin;
+
+
+        /* ================= INIT ================= */
+
+        let leads = [];
+        let selectedId = null;
+
+        /* ================= FETCH ================= */
+
+        async function checkAuth() {
+            try {
+                const res = await fetch(`${API_URL}/me`, {
+                    credentials: "include"
+                });
+
+                if (!res.ok) {
+                    window.location.href = "adminLogin.html";
+                    return;
+                }
+
+                const user = await res.json();
+
+                if (user.role !== "admin") {
+                    window.location.href = "login.html";
+                    return;
+                }
+
+                // 🔥 ONLY AFTER AUTH → FETCH DATA
+                await fetchLeads();
+
+                // 🔥 refresh every 10 sec
+                setInterval(fetchLeads, 10000);
+
+            } catch {
+                window.location.href = "adminLogin.html";
+            }
+        }
+
+        checkAuth();
+
+        /* ================= UPDATE ================= */
+        function updateUI() {
+            document.getElementById("leadCountDisplay").innerText =
+                `Active: ${leads.length}`;
+
+            renderLeads();
+
+            if (!selectedId && leads.length > 0) {
+                selectLead(leads[0].id);
+            }
+
+            if (leads.length === 0) {
+                clearDetails();
+            }
+        }
+
+        /* ================= RENDER ================= */
+        function renderLeads() {
+            const container = document.getElementById("leadsList");
+
+            if (!leads.length) {
+                container.innerHTML = `<div class="py-20 text-center opacity-30">No Signals</div>`;
+                return;
+            }
+
+            container.innerHTML = leads.map(l => {
+                const selected = selectedId === l.id;
+
+                return `
+        <div class="lead-card p-5 rounded-xl cursor-pointer ${selected ? 'selected' : ''}"
+             onclick="selectLead('${l.id}')">
+
+            <div class="flex justify-between mb-2">
+                <span class="text-xs ${l.type === 'request'
+                        ? 'text-blue-500'
+                        : (selected ? 'text-green-600' : 'text-yellow-600')
+                    }">
+                    ${l.type === 'request'
+                        ? 'Request'
+                        : (selected ? 'Selected' : 'Signal Logged')
+                    }
+                </span>
+
+                <button onclick="deleteLead('${l.id}', event, '${l.type}')"
+                        class="text-red-500 text-xs hover:scale-110 transition">
+                    ✕
+                </button>
+            </div>
+
+            <h3 class="font-bold text-lg">${l.user}</h3>
+            <p class="text-xs text-gray-500">📧 ${l.email}</p>
+            <p class="text-xs ${l.type === 'request' ? 'text-blue-500' : 'text-yellow-600'
+                    } mt-1">
+                ${l.title}
+            </p>
+        </div>
+        `;
+            }).join("");
+        }
+
+        /* ================= SELECT ================= */
+        function selectLead(id) {
+            selectedId = id;
+            renderLeads();
+
+            const lead = leads.find(l => l.id === id);
+            if (!lead) return;
+
+            document.getElementById("unmaskedDetail").innerHTML = `
+        <h2 class="text-2xl font-bold mb-4">${lead.user}</h2>
+        <p>📧 ${lead.email}</p>
+        <p>${lead.type === 'request' ? 'Request' : 'Project'}: ${lead.title}</p>
+        <p>Capacity: ${lead.capacity}</p>
+        <p>ID: ${lead.id}</p>
+    `;
+        }
+
+
+        async function fetchLeads() {
+            try {
+                const res = await fetch(`${API_URL}/leads`, {
+                    credentials: "include"
+                });
+
+                console.log("STATUS:", res.status);
+
+                if (!res.ok) {
+                    console.log("Failed to fetch leads");
+                    return;
+                }
+
+                const data = await res.json();
+                console.log("DATA:", data);
+
+                // 🔥 FIX mapping (see next bug)
+                leads = data.map(l => ({
+                    id: l._id,
+                    user: l.username,
+                    email: l.email,
+                    title: l.title,
+                    capacity: l.capacity,
+                    type: "asset"
+                }));
+
+                updateUI();
+
+            } catch (err) {
+                console.error("Fetch error:", err);
+            }
+        }
+
+        /* ================= DELETE ================= */
+        async function deleteLead(id, event, type) {
+            event.stopPropagation();
+
+            if (!confirm(`Delete this ${type}?`)) return;
+
+            try {
+                const url =
+                    type === "asset"
+                        ? `${API_URL}/leads/${id}`
+                        : `${API_URL}/requests/${id}`;
+
+                const res = await fetch(url, {
+                    method: "DELETE",
+                    credentials: "include"
+                });
+
+                if (!res.ok) {
+                    alert("Delete failed");
+                    return;
+                }
+
+                leads = leads.filter(l => l.id !== id);
+
+                if (selectedId === id) selectedId = null;
+
+                updateUI();
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        /* ================= EMPTY ================= */
+        function clearDetails() {
+            document.getElementById("unmaskedDetail").innerHTML =
+                `<div class="text-center opacity-40 py-20">No data</div>`;
+        }
+
+
+        async function logout() {
+            try {
+                await fetch(`${API_URL}/logout`, {
+                    method: "POST",
+                    credentials: "include"
+                });
+
+                // redirect after logout
+                window.location.href = "login.html";
+
+            } catch (err) {
+                console.error(err);
+                alert("Logout failed");
+            }
+        }
+
+    </script>
+
+
+</body>
+
+</html>

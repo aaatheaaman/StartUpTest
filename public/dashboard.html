@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energica Infra | Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-primary: #f8fafc;
+            --dark: #141516;
+            --accent: #FDE047;
+            --heading-font: 'Anton', sans-serif;
+            --body-font: 'Inter', sans-serif;
+        }
+
+        html,
+        body {
+            margin: 0;
+            overflow-x: hidden;
+            background-color: var(--bg-primary);
+            font-family: var(--body-font);
+            scrollbar-width: none;
+        }
+
+        html::-webkit-scrollbar {
+            display: none;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.8);
+            transform: translateY(-5px);
+        }
+
+        .dash-panel {
+            display: none;
+        }
+
+        .dash-panel.active {
+            display: block;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1,
+        h2,
+        h3,
+        .font-anton {
+            font-family: var(--heading-font) !important;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        .cursor-dot {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 12px;
+            height: 12px;
+            background-color: white;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            mix-blend-mode: difference;
+            display: none;
+        }
+
+        @media (pointer: fine) {
+            .cursor-dot {
+                display: block;
+            }
+        }
+
+        #bg-lines-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.15;
+        }
+
+        .bg-line {
+            stroke: #cbd5e1;
+            stroke-width: 1;
+        }
+    </style>
+</head>
+
+<body class="text-gray-900">
+
+    <div class="cursor-dot" id="cursorDot"></div>
+    <svg id="bg-lines-container"></svg>
+
+    <!-- ── HEADER ─────────────────────────────────────────────────────────── -->
+    <header
+        class="w-full flex justify-between items-center px-[5%] py-6 bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-[100]">
+        <div class="flex items-center gap-8">
+            <a href="index.html"
+                class="font-anton tracking-wide text-xl text-dark hover:text-yellow-400 transition-colors">
+                © ENERGICA INFRA
+            </a>
+            <div class="h-6 w-[1px] bg-gray-200 hidden md:block"></div>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="flex bg-gray-100 p-1 rounded-full gap-1">
+                <button class="dash-tab-btn active px-4 py-1.5 rounded-full text-xs transition-all font-anton"
+                    type="button" onclick="switchDashTab('marketplace')">Assets</button>
+                <button class="dash-tab-btn px-4 py-1.5 rounded-full text-xs transition-all font-anton" type="button"
+                    onclick="switchDashTab('workflow')">Pipeline</button>
+            </div>
+            <button type="button" onclick="toggleModal(true)"
+                class="bg-dark text-yellow-300 px-6 py-2.5 rounded-full hover:bg-yellow-400 hover:text-black transition-all shadow-lg font-anton text-sm tracking-widest">
+                Listing
+            </button>
+            <button onclick="logout()"
+                class="bg-red-500 text-white px-4 py-1.5 rounded-full text-xs font-anton hover:bg-red-600 transition-all">
+                Logout
+            </button>
+        </div>
+    </header>
+
+    <!-- ── MAIN ───────────────────────────────────────────────────────────── -->
+    <main class="p-[5%]">
+
+        <!-- Assets Panel -->
+        <div id="marketplacePanel" class="dash-panel active">
+            <div class="mb-12">
+                <h1 class="text-6xl tracking-tight mb-2">Infrastructure Assets</h1>
+                <p class="text-gray-400 font-light">Verified renewable listings with autonomous masking protection.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="assetGrid"></div>
+        </div>
+
+        <!-- Pipeline Panel -->
+        <div id="workflowPanel" class="dash-panel">
+            <div class="mb-12">
+                <h1 class="text-6xl tracking-tight mb-2">Activity Pipeline</h1>
+                <p class="text-gray-400 font-light">Real-time telemetry and project inquiries stream.</p>
+            </div>
+            <div class="glass-card rounded-[3rem] p-12">
+                <div class="space-y-6" id="activityFeed"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ── UPLOAD MODAL ────────────────────────────────────────────────────── -->
+    <div id="uploadModal" class="fixed inset-0 z-[2000] hidden flex items-center justify-center p-6">
+        <div class="absolute inset-0 bg-[#141516]/90 backdrop-blur-xl" onclick="toggleModal(false)"></div>
+        <div class="relative glass-card bg-white w-full max-w-md rounded-[2rem] p-7">
+            <button type="button" onclick="toggleModal(false)"
+                class="absolute top-6 right-6 text-gray-300 hover:text-yellow-500 transition-all p-2">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+            </button>
+
+            <h2 class="text-2xl font-anton mb-5">Add Infrastructure</h2>
+
+            <form id="assetForm" class="space-y-5">
+                <!-- Market Information -->
+                <div class="space-y-3">
+                    <label
+                        class="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400 block border-b border-gray-100 pb-1.5 font-anton">
+                        Market Information
+                    </label>
+                    <input type="text" id="projTitle" placeholder="Project Headline" required
+                        class="w-full bg-gray-50 p-3.5 rounded-xl text-sm outline-none focus:ring-2 ring-yellow-300 border-none">
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <span class="text-[8px] text-gray-400 uppercase font-bold ml-1 font-anton">Tech</span>
+                            <select id="techType"
+                                class="w-full bg-gray-50 p-3.5 rounded-xl text-xs outline-none border-none focus:ring-2 ring-yellow-300 font-anton">
+                                <option value="Solar">Solar PV</option>
+                                <option value="Wind">Wind Farm</option>
+                                <option value="Hybrid">Hybrid Cluster</option>
+                            </select>
+                        </div>
+                        <div class="space-y-1">
+                            <span class="text-[8px] text-gray-400 uppercase font-bold ml-1 font-anton">Capacity</span>
+                            <input type="text" id="capacity" placeholder="e.g. 500MW" required
+                                class="w-full bg-gray-50 p-3.5 rounded-xl text-xs outline-none border-none focus:ring-2 ring-yellow-300">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <span class="text-[8px] text-gray-400 uppercase font-bold ml-1 font-anton">Dist (KM)</span>
+                            <input type="text" id="distance" placeholder="KM"
+                                class="w-full bg-gray-50 p-3.5 rounded-xl text-xs outline-none border-none focus:ring-2 ring-yellow-300">
+                        </div>
+                        <div class="space-y-1">
+                            <span class="text-[8px] text-gray-400 uppercase font-bold ml-1 font-anton">Tariff</span>
+                            <input type="text" id="tariff" placeholder="Rate"
+                                class="w-full bg-gray-50 p-3.5 rounded-xl text-xs outline-none border-none focus:ring-2 ring-yellow-300">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sensitive Data -->
+                <div class="space-y-3">
+                    <label
+                        class="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400 block border-b border-gray-100 pb-1.5 font-anton">
+                        Sensitive Data (Masked)
+                    </label>
+                    <input type="text" id="khasra" placeholder="Survey Numbers"
+                        class="w-full bg-gray-50 p-3.5 rounded-xl text-sm outline-none border-none focus:ring-2 ring-yellow-300">
+                    <input type="text" id="owner" placeholder="Legal Entity"
+                        class="w-full bg-gray-50 p-3.5 rounded-xl text-sm outline-none border-none focus:ring-2 ring-yellow-300">
+                </div>
+
+                <button type="submit"
+                    class="w-full bg-dark text-yellow-300 p-4 rounded-xl font-anton text-xs tracking-widest uppercase hover:bg-yellow-400 hover:text-black transition-all shadow-lg">
+                    Publish Masked Asset
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2"></div>
+
+    <script>
+        const API_URL =
+            ["localhost", "127.0.0.1"].includes(window.location.hostname)
+                ? "http://localhost:5000"
+                : window.location.origin;
+
+        /* ================= AUTH CHECK ================= */
+        async function checkAuth() {
+            try {
+                const res = await fetch("/me", {
+                    credentials: "include"
+                });
+
+                if (!res.ok) {
+                    window.location.href = "login.html";
+                    return;
+                }
+
+                const user = await res.json();
+
+                // 🔥 ROLE-BASED REDIRECT
+                if (user.role === "admin" && !window.location.pathname.includes("admin")) {
+                    window.location.href = "admin.html";
+                }
+
+                if (user.role === "user" && window.location.pathname.includes("admin")) {
+                    window.location.href = "dashboard.html";
+                }
+
+            } catch {
+                window.location.href = "login.html";
+            }
+        }
+
+        checkAuth();
+
+        let assets = [];
+        let activities = [{ msg: "System: Initialization complete.", time: "Just now" }];
+
+        /* ================= MODAL ================= */
+        function toggleModal(show) {
+            const modal = document.getElementById('uploadModal');
+            modal.classList.toggle('hidden', !show);
+            document.body.style.overflow = show ? "hidden" : "auto";
+        }
+
+        /* ================= TAB ================= */
+        function switchDashTab(tab) {
+            document.querySelectorAll('.dash-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.dash-tab-btn').forEach(b => b.classList.remove('bg-white', 'shadow-sm', 'text-dark'));
+
+            document.getElementById(tab + 'Panel').classList.add('active');
+
+            const btn = Array.from(document.querySelectorAll('.dash-tab-btn'))
+                .find(b => b.innerText.toLowerCase().includes(tab.substring(0, 3)));
+
+            if (btn) btn.classList.add('bg-white', 'shadow-sm', 'text-dark');
+        }
+
+        /* ================= RENDER ASSETS ================= */
+        function renderAssets() {
+            const grid = document.getElementById('assetGrid');
+
+            if (assets === null) {
+                grid.innerHTML = `<div class="text-center py-20">Loading...</div>`;
+                return;
+            }
+
+            if (assets.length === 0) {
+                grid.innerHTML = `<div class="py-20 text-center opacity-40">No Assets</div>`;
+                return;
+            }
+
+            grid.innerHTML = assets.map(a => `
+        <div class="card glass-card rounded-[2rem] p-6">
+            <div class="flex justify-between mb-3">
+                <span class="text-xs bg-black text-yellow-300 px-2 py-1 rounded">${a.tech}</span>
+                <span class="text-[10px] text-gray-400">${a.id}</span>
+            </div>
+
+            <h3 class="text-xl font-anton mb-4">${a.title}</h3>
+
+            <p class="text-xs">Capacity: ${a.specs.cap}</p>
+            <p class="text-xs mb-4">Tariff: ${a.specs.tariff}</p>
+
+            <button onclick="logInterest('${a.id}')"
+                class="w-full border p-3 rounded-xl text-xs font-anton hover:bg-black hover:text-white">
+                Request Verification
+            </button>
+        </div>
+    `).join("");
+
+            gsap.killTweensOf("#assetGrid .card");
+            gsap.set("#assetGrid .card", { opacity: 1, y: 0 });
+
+            requestAnimationFrame(() => {
+                gsap.from("#assetGrid .card", {
+                    opacity: 0,
+                    y: 20,
+                    stagger: 0.08,
+                    duration: 0.5,
+                    ease: "power2.out",
+                    clearProps: "all"
+                });
+            });
+        }
+
+        /* ================= LOAD ASSETS ================= */
+        async function loadAssets() {
+            const grid = document.getElementById("assetGrid");
+
+            assets = null;
+            renderAssets();
+
+            try {
+                const res = await fetch(`${API_URL}/leads`, {
+                    credentials: "include"
+                });
+
+                if (!res.ok) {
+                    window.location.href = "login.html";
+                    return;
+                }
+
+                const data = await res.json();
+
+                assets = data.map(i => ({
+                    id: i.id,
+                    tech: i.tech,
+                    title: i.title,
+                    specs: {
+                        cap: i.capacity,
+                        tariff: i.tariff,
+                        distance: i.distance
+                    }
+                }));
+
+                renderAssets();
+
+            } catch (err) {
+                console.error(err);
+                grid.innerHTML = "Failed to load data";
+            }
+        }
+
+        /* ================= LOAD REQUESTS ================= */
+        async function loadRequests() {
+            activities = [{ msg: "System: Initialization complete.", time: "Just now" }];
+
+            try {
+                const res = await fetch(`${API_URL}/requests`, {
+                    credentials: "include"
+                });
+
+                const data = await res.json();
+
+                data.forEach(r => {
+                    activities.unshift({
+                        msg: `Verification requested for Asset ID: ${r.assetId}`,
+                        time: new Date(r.time).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })
+                    });
+                });
+
+                renderFeed();
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        /* ================= ACTIVITY ================= */
+        function addActivity(message) {
+            const time = new Date().toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            activities.unshift({ msg: message, time });
+            renderFeed();
+            switchDashTab("workflow");
+        }
+
+        function renderFeed() {
+            const feed = document.getElementById("activityFeed");
+
+            feed.innerHTML = activities.map(a => `
+        <div class="flex justify-between border-b py-3">
+            <span>${a.msg}</span>
+            <span class="text-xs text-gray-400">${a.time}</span>
+        </div>
+    `).join("");
+        }
+
+        /* ================= REQUEST ================= */
+        async function logInterest(id) {
+            try {
+                const res = await fetch(`${API_URL}/requests`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include",
+                    body: JSON.stringify({
+                        assetId: id,
+                        email: "[EMAIL_ADDRESS]" // temporary fix
+                    })
+                });
+
+                if (!res.ok) {
+                    alert("Request failed");
+                    return;
+                }
+
+                addActivity(`Verification requested for Asset ID: ${id}`);
+                switchDashTab("workflow");
+
+            } catch (err) {
+                console.error(err);
+                alert("Server error");
+            }
+        }
+
+        /* ================= PUBLISH ================= */
+        document.getElementById("assetForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const title = document.getElementById('projTitle').value;
+            const tech = document.getElementById('techType').value;
+            const capacityVal = document.getElementById('capacity').value;
+            const tariffVal = document.getElementById('tariff').value;
+            const distanceVal = document.getElementById('distance').value;
+
+            try {
+                const res = await fetch(`${API_URL}/leads`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include",
+                    body: JSON.stringify({
+                        title,
+                        tech,
+                        capacity: capacityVal,
+                        tariff: tariffVal,
+                        distance: distanceVal
+                    })
+                });
+
+                if (!res.ok) return alert("Error");
+
+                toggleModal(false);
+                addActivity(`New Asset Published: ${title}`);
+                switchDashTab("workflow");
+                loadAssets();
+
+            } catch (err) {
+                console.error(err);
+                alert("Server error");
+            }
+        });
+
+        /* ================= INIT ================= */
+        window.addEventListener("load", () => {
+            loadAssets();
+            loadRequests();
+            renderFeed();
+        });
+
+
+
+        async function logout() {
+            try {
+                await fetch("/logout", {
+                    method: "POST",
+                    credentials: "include"
+                });
+
+                // redirect after logout
+                window.location.href = "login.html";
+
+            } catch (err) {
+                console.error(err);
+                alert("Logout failed");
+            }
+        }
+    </script>
+</body>
+
+</html>

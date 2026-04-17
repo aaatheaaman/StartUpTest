@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energica Infra | Secure Access</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-primary: #f8fafc;
+            --dark: #141516;
+            --accent: #FDE047;
+            --heading-font: 'Anton', sans-serif;
+            --body-font: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            font-family: var(--body-font);
+            margin: 0;
+            min-height: 100vh;
+            color: var(--dark);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .font-anton {
+            font-family: var(--heading-font);
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        /* Smooth Background Grid */
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.3;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.05);
+            border-radius: 2rem;
+            width: 100%;
+            max-width: 480px;
+            transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 1.25rem;
+        }
+
+        .login-input {
+            width: 100%;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            padding: 0.875rem 1.25rem;
+            border-radius: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .login-input:focus {
+            border-color: var(--dark);
+            box-shadow: 0 0 0 4px rgba(20, 21, 22, 0.05);
+        }
+
+        .view-section {
+            display: none;
+            opacity: 0;
+            width: 100%;
+        }
+
+        .view-section.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 1;
+        }
+
+        .magnetic-btn {
+            display: inline-block;
+            transition: transform 0.2s ease;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body class="px-6">
+
+    <div class="bg-grid"></div>
+
+    <!-- Header / Brand -->
+    <header class="w-full py-8 flex justify-center shrink-0">
+        <div class="magnetic-btn cursor-pointer" onclick="window.location.href='index.html'">
+            <span class="font-anton text-xl tracking-tighter">© ENERGICA INFRA</span>
+        </div>
+    </header>
+
+    <!-- Main Centered Container -->
+    <main class="flex-grow flex items-center justify-center w-full py-8">
+
+        <!-- LOGIN SECTION -->
+        <section id="login-view" class="view-section active">
+            <div class="text-center mb-6">
+                <h1 class="text-4xl md:text-5xl font-anton mb-2">User Login</h1>
+            </div>
+
+            <div class="glass-card p-8 md:p-10">
+                <form id="loginForm" class="space-y-4">
+                    <div class="input-group">
+                        <label
+                            class="text-[10px] font-anton uppercase tracking-widest text-slate-400 mb-1.5 block ml-1">
+                            Email</label>
+                        <input type="email" id="loginEmail" placeholder="name@company.com" class="login-input" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label
+                            class="text-[10px] font-anton uppercase tracking-widest text-slate-400 mb-1.5 block ml-1">
+                            Password</label>
+                        <input type="password" id="loginPassword" placeholder="••••••••••••" class="login-input"
+                            required>
+                    </div>
+
+                    <div class="flex items-center justify-between pb-1">
+                        <label
+                            class="flex items-center gap-2 cursor-pointer text-[11px] text-slate-500 hover:text-dark transition-colors">
+                            <input type="checkbox" class="w-3.5 h-3.5 rounded border-slate-300">
+                            <span>remember me</span>
+                        </label>
+                        <a href="reset.html" class="text-[11px] text-slate-400 hover:text-dark underline">
+                            Forgot Password?
+                        </a>
+                    </div>
+
+                    <button type="submit"
+                        class="w-full bg-dark text-black py-4 rounded-xl font-anton text-lg tracking-widest hover:bg-slate-800 transition-all shadow-lg active:scale-[0.98]">
+                        login
+                    </button>
+                </form>
+
+                <div class="mt-6 pt-6 border-t border-slate-100 text-center">
+                    <p class="text-xs text-slate-400">
+                        Don't have a account
+                        <a href="javascript:void(0)" onclick="toggleAuth('register')"
+                            class="text-dark font-bold hover:underline">Register New Account</a>
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- REGISTER SECTION -->
+        <section id="register-view" class="view-section">
+            <div class="text-center mb-6">
+                <h1 class="text-4xl md:text-5xl font-anton mb-2">New User</h1>
+            </div>
+
+            <div class="glass-card p-8 md:p-10 !max-w-[540px]">
+                <form id="registerForm" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label
+                                class="text-[10px] font-anton uppercase tracking-widest text-slate-400 mb-1.5 block ml-1">Username</label>
+                            <input type="text" id="regUser" placeholder="operator_x" class="login-input" required>
+                        </div>
+                        <div class="input-group">
+                            <label
+                                class="text-[10px] font-anton uppercase tracking-widest text-slate-400 mb-1.5 block ml-1">
+                                Email</label>
+                            <input type="email" id="regEmail" placeholder="name@infra.com" class="login-input" required>
+                        </div>
+                        <div class="input-group">
+                            <label
+                                class="text-[10px] font-anton uppercase tracking-widest text-slate-400 mb-1.5 block ml-1">Password</label>
+                            <input type="password" id="regPass" placeholder="••••••••••••" class="login-input" required>
+                        </div>
+                    </div>
+
+
+                    <div class="flex items-start gap-3 px-1 py-1">
+                        <input type="checkbox" id="terms" class="mt-1 w-3.5 h-3.5 rounded border-slate-300" required>
+                        <label for="terms" class="text-[10px] text-slate-500 leading-snug">
+                            I accept the <span class="text-dark font-bold">Protocol</span> and the <span
+                                class="text-dark font-bold">Disclosure Agreements</span>.
+                        </label>
+                    </div>
+
+                    <button type="submit"
+                        class="w-full bg-dark text-black py-4 rounded-xl font-anton text-lg tracking-widest hover:bg-slate-800 transition-all shadow-lg active:scale-[0.98]">
+                        Register
+                    </button>
+                </form>
+
+                <div class="mt-6 pt-6 border-t border-slate-100 text-center">
+                    <p class="text-xs text-slate-400">
+                        Already have Account?
+                        <a href="javascript:void(0)" onclick="toggleAuth('login')"
+                            class="text-dark font-bold hover:underline">Login</a>
+                    </p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        /* ================= CONFIG ================= */
+        const API_URL =
+            ["localhost", "127.0.0.1"].includes(window.location.hostname)
+                ? "http://localhost:5000"
+                : window.location.origin;
+
+        /* ================= AUTO LOGIN CHECK ================= */
+        async function checkAuth() {
+            try {
+                const res = await fetch(`${API_URL}/me`, {
+                    credentials: "include"
+                });
+
+                if (!res.ok) return;
+
+                const user = await res.json();
+
+                // 🔥 ROLE-BASED REDIRECT
+                if (user.role === "admin") {
+                    window.location.href = "admin.html";
+                } else {
+                    window.location.href = "dashboard.html";
+                }
+
+            } catch (err) {
+                console.log("Not logged in");
+            }
+        }
+
+        checkAuth();
+
+        /* ================= TOGGLE ================= */
+        function toggleAuth(view) {
+            const loginView = document.getElementById('login-view');
+            const registerView = document.getElementById('register-view');
+
+            if (view === 'register') {
+                gsap.to(loginView, {
+                    opacity: 0, y: 10, duration: 0.3,
+                    onComplete: () => {
+                        loginView.classList.remove('active');
+                        registerView.classList.add('active');
+                        gsap.fromTo(registerView, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4 });
+                    }
+                });
+            } else {
+                gsap.to(registerView, {
+                    opacity: 0, y: 10, duration: 0.3,
+                    onComplete: () => {
+                        registerView.classList.remove('active');
+                        loginView.classList.add('active');
+                        gsap.fromTo(loginView, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4 });
+                    }
+                });
+            }
+        }
+
+        /* ================= LOGIN ================= */
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const btn = e.target.querySelector('button');
+            btn.innerHTML = "Logging in...";
+            btn.disabled = true;
+
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+
+            if (!email || !password) {
+                showToast("Enter email & password");
+                btn.innerHTML = "Login";
+                btn.disabled = false;
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include", // 🔥 IMPORTANT
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showToast(data.message || "Login failed", "error");
+                    btn.innerHTML = "Login";
+                    btn.disabled = false;
+                    return;
+                }
+
+                showToast("Login successful!", "success");
+
+                // 🔥 get role
+                const me = await fetch(`${API_URL}/me`, { credentials: "include" });
+                if (!me.ok) {
+                    showToast("Session error", "error");
+                    return;
+                }
+                const user = await me.json();
+
+                if (user.role === "admin") {
+                    window.location.href = "admin.html";
+                } else {
+                    window.location.href = "dashboard.html";
+                }
+
+            } catch (err) {
+                console.error(err);
+                showToast("Server error", "error");
+                btn.innerHTML = "Login";
+                btn.disabled = false;
+            }
+        });
+
+        /* ================= REGISTER ================= */
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const btn = e.target.querySelector('button');
+            btn.innerHTML = "Registering...";
+            btn.disabled = true;
+
+            const username = document.getElementById('regUser').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPass').value.trim();
+
+            if (!username || !email || !password) {
+                showToast("All fields are required");
+                btn.innerHTML = "Register";
+                btn.disabled = false;
+                return;
+            }
+
+            if (password.length < 6) {
+                showToast("Password must be at least 6 characters");
+                btn.innerHTML = "Register";
+                btn.disabled = false;
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/register`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include",
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showToast(data.message || "Registration failed", "error");
+                    btn.innerHTML = "Register";
+                    btn.disabled = false;
+                    return;
+                }
+
+                showToast("Registered successfully!", "success");
+
+                btn.innerHTML = "Register";
+                btn.disabled = false;
+
+                toggleAuth('login');
+
+            } catch (err) {
+                console.error(err);
+                showToast("Server error", "error");
+                btn.innerHTML = "Register";
+                btn.disabled = false;
+            }
+        });
+
+        /* ================= TOAST ================= */
+        function showToast(message, type = "error") {
+            const container = document.getElementById("toast-container");
+            if (!container) return;
+
+            const toast = document.createElement("div");
+
+            const colors = {
+                success: "bg-green-500",
+                error: "bg-red-500"
+            };
+
+            toast.className = `
+        ${colors[type]} text-white px-5 py-3 rounded-xl shadow-lg
+        transform translate-x-full opacity-0 transition-all duration-300
+    `;
+
+            toast.innerHTML = (type === "success" ? "✅ " : "❌ ") + message;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove("translate-x-full", "opacity-0");
+            }, 100);
+
+            setTimeout(() => {
+                toast.classList.add("translate-x-full", "opacity-0");
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        /* ================= MAGNETIC ================= */
+        document.querySelectorAll('.magnetic-btn').forEach(btn => {
+            btn.addEventListener('mousemove', (e) => {
+                const rect = btn.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+                btn.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
+            });
+
+            btn.addEventListener('mouseleave', () => {
+                btn.style.transform = `translate(0, 0)`;
+            });
+        });
+    </script>
+
+    <div id="toast-container" class="fixed bottom-5 right-5 z-[9999] space-y-3"></div>
+</body>
+
+</html>
